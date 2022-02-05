@@ -9,6 +9,9 @@ const fs = require('fs'),
     'channel_subscriptions'
   ]
 
+// Items per page
+const itemsPerPage = 100;
+
 const app = express(),
   port = 8080;
 app.use(cors());
@@ -59,7 +62,7 @@ function refreshToken(token, callback) {
 }
 
 function getSubs(token, callback, subs = [], cursor, page = 0) {
-  const url = `https://api.twitch.tv/helix/subscriptions?broadcaster_id=${process.env.USER_ID}&first=100${cursor ? `&after=${cursor}` : ''}`,
+  const url = `https://api.twitch.tv/helix/subscriptions?broadcaster_id=${process.env.USER_ID}&first=${itemsPerPage}${cursor ? `&after=${cursor}` : ''}`,
     headers = {
       "Authorization": `Bearer ${token}`,
       "Client-Id": process.env.TWITCH_CLIENT_ID
@@ -72,7 +75,7 @@ function getSubs(token, callback, subs = [], cursor, page = 0) {
       .then(res => {
         subs = [...subs, ...res.data.data];
         page++;
-        if (page * 25 < res.data.total) {
+        if (page * itemsPerPage < res.data.total) {
           getSubs(token, callback, subs, res.data.pagination.cursor, page);
         } else {
           fs.writeFile("subs.json", JSON.stringify({
